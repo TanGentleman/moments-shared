@@ -8,29 +8,33 @@ export interface Message {
   content: string
 }
 
-// AI Configuration
+/**
+ * AI Configuration
+ * Contains endpoints, available models, and default settings
+ */
 export const AI_CONFIG = {
-  // API endpoints
   endpoints: {
-    openRouter: 'https://openrouter.ai/api/v1',
+    openrouter: 'https://openrouter.ai/api/v1',
     local: 'http://localhost:4000/v1',
   },
-  // Available models
   models: {
-    // OpenAI models
-    qwq: 'open/qwen/qwq-32b',
-    qwen: 'open/qwen/qwen-2.5-72b-instruct',
-    // OpenRouter models
+    // Used with Openrouter
+    qwq: 'qwen/qwq-32b', // This provider strips thinking phase
+    qwen: 'qwen/qwen-2.5-72b-instruct',
     mistral: 'mistral/ministral-8b',
+    llama4: 'meta-llama/llama-4-scout',
+
+    // used with LiteLLM proxy
+    sambaDeepseek: 'sambanova/DeepSeek-V3-0324',
+    sambaQwQ: 'sambanova/QwQ-32B', // Includes thinking phase
   },
-  // Default configurations
   defaults: {
-    endpoint: 'http://localhost:4000/v1',
-    model: 'open/mistral/ministral-8b',
+    endpoint: 'https://openrouter.ai/api/v1',
+    model: 'meta-llama/llama-4-scout',
     params: {
       maxTokens: 4096,
       temperature: 0.7,
-      timeout: 30000, // 30 seconds timeout
+      timeout: 10000,
     }
   }
 }
