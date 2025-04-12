@@ -87,34 +87,46 @@ function Home() {
 
       const decoder = new TextDecoder()
 
-      let done = false
+      // Create the assistant message with initial empty content
       let newMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant' as const,
         content: '',
       }
-      while (!done) {
-        const out = await reader.read()
-        done = out.done
-        if (!done) {
-          try {
-            const json = JSON.parse(decoder.decode(out.value))
-            if (json.type === 'content_block_delta') {
-              newMessage = {
-                ...newMessage,
-                content: newMessage.content + json.delta.text,
-              }
-              setPendingMessage(newMessage)
-            }
-          } catch (e) {
-            console.error('Error parsing streaming response:', e)
+
+      // Set the initial pending message
+      setPendingMessage(newMessage)
+
+      // Read the stream
+      try {
+        while (true) {
+          const { value, done } = await reader.read()
+          
+          // If the stream is done, break the loop
+          if (done) break
+          
+          // Decode the chunk and append to the message content
+          const text = decoder.decode(value, { stream: true })
+          newMessage = {
+            ...newMessage,
+            content: newMessage.content + text
           }
+          
+          // Update the pending message with the new content
+          setPendingMessage(newMessage)
         }
+      } catch (error) {
+        console.error('Error reading stream:', error)
+      } finally {
+        // Make sure to clean up the decoder stream
+        decoder.decode(new Uint8Array())
       }
 
+      // Clear the pending message
       setPendingMessage(null)
+      
+      // Add the final message to the conversation if it's not empty
       if (newMessage.content.trim()) {
-        // Add AI message to Convex
         console.log('Adding AI response to conversation:', conversationId)
         await addMessage(conversationId, newMessage)
       }

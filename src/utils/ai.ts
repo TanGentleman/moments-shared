@@ -8,6 +8,33 @@ export interface Message {
   content: string
 }
 
+// AI Configuration
+export const AI_CONFIG = {
+  // API endpoints
+  endpoints: {
+    openRouter: 'https://openrouter.ai/api/v1',
+    local: 'http://localhost:4000/v1',
+  },
+  // Available models
+  models: {
+    // OpenAI models
+    qwq: 'open/qwen/qwq-32b',
+    qwen: 'open/qwen/qwen-2.5-72b-instruct',
+    // OpenRouter models
+    mistral: 'mistral/ministral-8b',
+  },
+  // Default configurations
+  defaults: {
+    endpoint: 'http://localhost:4000/v1',
+    model: 'open/mistral/ministral-8b',
+    params: {
+      maxTokens: 4096,
+      temperature: 0.7,
+      timeout: 30000, // 30 seconds timeout
+    }
+  }
+}
+
 const DEFAULT_SYSTEM_PROMPT = `You are TanStack Chat, an AI assistant using Markdown for clear and structured responses. Format your responses following these guidelines:
 
 1. Use headers for sections:
@@ -56,6 +83,9 @@ export const genAIResponse = createServerFn({ method: 'GET', response: 'raw' })
     (d: {
       messages: Array<Message>
       systemPrompt?: { value: string; enabled: boolean }
+      model?: string
+      maxTokens?: number
+      endpoint?: string
     }) => d,
   )
   // .middleware([loggingMiddleware])
@@ -71,10 +101,9 @@ export const genAIResponse = createServerFn({ method: 'GET', response: 'raw' })
     
     // Create OpenAI client with proper configuration
     const openai = new OpenAI({
-      baseURL: 'https://openrouter.ai/api/v1',
+      baseURL: data.endpoint || AI_CONFIG.defaults.endpoint,
       apiKey,
-      // Add proper timeout to avoid connection issues
-      timeout: 30000 // 30 seconds timeout
+      timeout: AI_CONFIG.defaults.params.timeout
     })
 
     // Filter out error messages and empty messages
@@ -118,31 +147,42 @@ export const genAIResponse = createServerFn({ method: 'GET', response: 'raw' })
       ];
 
       const stream = await openai.chat.completions.create({
-        model: 'mistral/ministral-8b',
+        model: data.model || AI_CONFIG.defaults.model,
         messages: messages,
-        max_tokens: 4096,
+        max_tokens: data.maxTokens || AI_CONFIG.defaults.params.maxTokens,
+        temperature: AI_CONFIG.defaults.params.temperature,
         stream: true,
       });
 
-      // Create a ReadableStream to convert OpenAI's format to match Anthropic's format
-      const encoder = new TextEncoder();
-      const readable = new ReadableStream({
-        async start(controller) {
-          for await (const chunk of stream) {
-            if (chunk.choices[0]?.delta?.content) {
-              // Format to match what the frontend expects
-              const formattedChunk = {
-                type: 'content_block_delta',
-                delta: { text: chunk.choices[0].delta.content }
-              };
-              controller.enqueue(encoder.encode(JSON.stringify(formattedChunk)));
-            }
+      // Create a simple transformed stream that just passes the raw text content
+      const transformStream = new TransformStream({
+        async transform(chunk, controller) {
+          if (chunk.choices[0]?.delta?.content) {
+            controller.enqueue(chunk.choices[0].delta.content);
           }
-          controller.close();
         }
       });
 
-      return new Response(readable);
+      // Pipe the OpenAI stream through our transform
+      const reader = stream[Symbol.asyncIterator]();
+      const writer = transformStream.writable.getWriter();
+      
+      (async () => {
+        try {
+          while (true) {
+            const { value, done } = await reader.next();
+            if (done) break;
+            await writer.write(value);
+          }
+        } catch (error) {
+          console.error('Error in stream processing:', error);
+        } finally {
+          writer.close();
+        }
+      })();
+
+      return new Response(transformStream.readable);
+      
     } catch (error) {
       console.error('Error in genAIResponse:', error)
       
@@ -172,4 +212,4 @@ export const genAIResponse = createServerFn({ method: 'GET', response: 'raw' })
         headers: { 'Content-Type': 'application/json' },
       })
     }
-  }) 
+  })
