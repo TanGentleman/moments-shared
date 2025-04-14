@@ -12,6 +12,7 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as LiveImport } from './routes/live'
+import { Route as DevImport } from './routes/dev'
 import { Route as IndexImport } from './routes/index'
 
 // Create/Update Routes
@@ -19,6 +20,12 @@ import { Route as IndexImport } from './routes/index'
 const LiveRoute = LiveImport.update({
   id: '/live',
   path: '/live',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const DevRoute = DevImport.update({
+  id: '/dev',
+  path: '/dev',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -39,6 +46,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
+    '/dev': {
+      id: '/dev'
+      path: '/dev'
+      fullPath: '/dev'
+      preLoaderRoute: typeof DevImport
+      parentRoute: typeof rootRoute
+    }
     '/live': {
       id: '/live'
       path: '/live'
@@ -53,36 +67,41 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dev': typeof DevRoute
   '/live': typeof LiveRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dev': typeof DevRoute
   '/live': typeof LiveRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
+  '/dev': typeof DevRoute
   '/live': typeof LiveRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/live'
+  fullPaths: '/' | '/dev' | '/live'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/live'
-  id: '__root__' | '/' | '/live'
+  to: '/' | '/dev' | '/live'
+  id: '__root__' | '/' | '/dev' | '/live'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DevRoute: typeof DevRoute
   LiveRoute: typeof LiveRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DevRoute: DevRoute,
   LiveRoute: LiveRoute,
 }
 
@@ -97,11 +116,15 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
+        "/dev",
         "/live"
       ]
     },
     "/": {
       "filePath": "index.tsx"
+    },
+    "/dev": {
+      "filePath": "dev.tsx"
     },
     "/live": {
       "filePath": "live.tsx"

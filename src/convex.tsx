@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
-import { ConvexProvider, ConvexReactClient } from 'convex/react';
+import { ConvexAuthProvider } from "@convex-dev/auth/react";
+// import { ConvexProvider, ConvexReactClient } from 'convex/react';
+import { ConvexReactClient } from 'convex/react';
 
 // Get the Convex URL from environment variables
 const convexUrl = import.meta.env.VITE_CONVEX_URL as string | undefined;
@@ -13,7 +15,9 @@ export function ConvexClientProvider({ children }: { children: ReactNode }) {
     console.warn('No Convex URL provided. Skipping Convex integration.');
     return <>{children}</>;
   }
-  
   // Otherwise, wrap children with ConvexProvider
-  return <ConvexProvider client={convex}>{children}</ConvexProvider>;
+  return <ConvexAuthProvider client={convex}>{children}</ConvexAuthProvider>;
+  
+  /* Deprecated in favor of auth */
+  // return <ConvexProvider client={convex}>{children}</ConvexProvider>;
 }
