@@ -72,7 +72,9 @@ export const genAIResponse = createServerFn({ method: 'GET', response: 'raw' })
     console.log('System Prompt Configuration:', {
       hasCustomPrompt: data.systemPrompt?.enabled,
       customPromptValue: data.systemPrompt?.value,
-      finalPrompt: systemPrompt,
+      // finalPrompt: systemPrompt,
+      // trim the middle of the prompt
+      finalPrompt: systemPrompt.slice(0, 100) + '...' + systemPrompt.slice(-100)
     })
 
     try {

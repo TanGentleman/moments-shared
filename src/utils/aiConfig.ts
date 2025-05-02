@@ -12,9 +12,12 @@ export const modelMap = {
   gemma: 'google/gemma-3-27b-it',
 
   // used with LiteLLM proxy
+  qwen3LiteLLM: 'open/qwen/qwen3-8b',
+  qwen3BigLiteLLM: 'open/qwen/qwen3-235b-a22b',
   mistralSabaLiteLLM: 'open/mistralai/mistral-saba',
   sambaDeepseekLiteLLM: 'sambanova/DeepSeek-V3-0324',
-  sambaQwQLiteLLM: 'sambanova/QwQ-32B', // Includes thinking phase
+  localQwen3LiteLLM: 'lmstudio/qwen3-4b-mlx',
+//   sambaQwen3LiteLLM: 'sambanova/Qwen3-32B', // Includes thinking phase
 } as const;
 
 export const AI_CONFIG = {
@@ -22,8 +25,8 @@ export const AI_CONFIG = {
     ...modelMap
   },
   defaults: {
-    endpoint: endpointMap.liteLLM,
-    model: modelMap.mistralSabaLiteLLM,
+    endpoint: endpointMap.openrouter,
+    model: modelMap.mistral,
     params: {
       maxTokens: 8000,
       temperature: 0.7,
