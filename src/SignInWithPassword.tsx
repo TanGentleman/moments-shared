@@ -12,12 +12,14 @@ export function SignInWithPassword({
   handlePasswordReset,
   customSignUp: customSignUp,
   passwordRequirements,
+  disableSignUp = true,
 }: {
   provider?: string;
   handleSent?: (email: string) => void;
   handlePasswordReset?: () => void;
   customSignUp?: React.ReactNode;
   passwordRequirements?: string;
+  disableSignUp?: boolean;
 }) {
   const { signIn } = useAuthActions();
   const [flow, setFlow] = useState<"signIn" | "signUp">("signIn");
@@ -30,6 +32,9 @@ export function SignInWithPassword({
         event.preventDefault();
         setSubmitting(true);
         const formData = new FormData(event.currentTarget);
+        if (disableSignUp) {
+          formData.set("flow", "signIn");
+        }
         signIn(provider ?? "password", formData)
           .then(() => {
             handleSent?.(formData.get("email") as string);
@@ -46,7 +51,7 @@ export function SignInWithPassword({
             } else {
               toastTitle =
                 flow === "signIn"
-                  ? "Could not sign in, did you mean to sign up?"
+                  ? "Could not sign in, please check your credentials."
                   : "Could not sign up, did you mean to sign in?";
             }
             toast({ title: toastTitle, variant: "destructive" });
@@ -86,17 +91,19 @@ export function SignInWithPassword({
       <Button type="submit" disabled={submitting} className="mt-4">
         {flow === "signIn" ? "Sign in" : "Sign up"}
       </Button>
-      <Button
-        variant="link"
-        type="button"
-        onClick={() => {
-          setFlow(flow === "signIn" ? "signUp" : "signIn");
-        }}
-      >
-        {flow === "signIn"
-          ? "Don't have an account? Sign up"
-          : "Already have an account? Sign in"}
-      </Button>
+      {!disableSignUp && (
+        <Button
+          variant="link"
+          type="button"
+          onClick={() => {
+            setFlow(flow === "signIn" ? "signUp" : "signIn");
+          }}
+        >
+          {flow === "signIn"
+            ? "Don't have an account? Sign up"
+            : "Already have an account? Sign in"}
+        </Button>
+      )}
     </form>
   );
 }
