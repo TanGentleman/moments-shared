@@ -1,85 +1,13 @@
 import { createServerFn } from '@tanstack/react-start'
 import OpenAI from 'openai'
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions.mjs'
+import { AI_CONFIG, DEFAULT_SYSTEM_PROMPT, endpointMap } from './aiConfig'
 
 export interface Message {
   id: string
   role: 'user' | 'assistant'
   content: string
 }
-
-/**
- * AI Configuration
- * Contains endpoints, available models, and default settings
- */
-export const AI_CONFIG = {
-  endpoints: {
-    openrouter: 'https://openrouter.ai/api/v1',
-    local: 'http://localhost:4000/v1',
-  },
-  models: {
-    // Used with Openrouter
-    qwq: 'qwen/qwq-32b', // This provider strips thinking phase
-    qwen: 'qwen/qwen-2.5-72b-instruct',
-    mistral: 'mistral/ministral-8b',
-    llama4: 'meta-llama/llama-4-scout',
-
-    // used with LiteLLM proxy
-    sambaDeepseek: 'sambanova/DeepSeek-V3-0324',
-    sambaQwQ: 'sambanova/QwQ-32B', // Includes thinking phase
-  },
-  defaults: {
-    endpoint: 'https://openrouter.ai/api/v1',
-    model: 'meta-llama/llama-4-scout',
-    params: {
-      maxTokens: 4096,
-      temperature: 0.7,
-      timeout: 10000,
-    }
-  }
-}
-
-const DEFAULT_SYSTEM_PROMPT = `You are TanStack Chat, an AI assistant using Markdown for clear and structured responses. Format your responses following these guidelines:
-
-1. Use headers for sections:
-   # For main topics
-   ## For subtopics
-   ### For subsections
-
-2. For lists and steps:
-   - Use bullet points for unordered lists
-   - Number steps when sequence matters
-   
-3. For code:
-   - Use inline \`code\` for short snippets
-   - Use triple backticks with language for blocks:
-   \`\`\`python
-   def example():
-       return "like this"
-   \`\`\`
-
-4. For emphasis:
-   - Use **bold** for important points
-   - Use *italics* for emphasis
-   - Use > for important quotes or callouts
-
-5. For structured data:
-   | Use | Tables |
-   |-----|---------|
-   | When | Needed |
-
-6. Break up long responses with:
-   - Clear section headers
-   - Appropriate spacing between sections
-   - Bullet points for better readability
-   - Short, focused paragraphs
-
-7. For technical content:
-   - Always specify language for code blocks
-   - Use inline \`code\` for technical terms
-   - Include example usage where helpful
-
-Keep responses concise and well-structured. Use appropriate Markdown formatting to enhance readability and understanding.`
 
 // Non-streaming implementation
 export const genAIResponse = createServerFn({ method: 'GET', response: 'raw' })
@@ -95,20 +23,27 @@ export const genAIResponse = createServerFn({ method: 'GET', response: 'raw' })
   // .middleware([loggingMiddleware])
   .handler(async ({ data }) => {
     // Check for API key in environment variables
-    const apiKey = process.env.OPENAI_API_KEY || import.meta.env.VITE_OPENAI_API_KEY
+    const endpoint = data.endpoint || AI_CONFIG.defaults.endpoint;
+    const apiKey =
+      endpoint === endpointMap.liteLLM
+        ? process.env.LITELLM_API_KEY
+        : process.env.OPENAI_API_KEY || import.meta.env.VITE_OPENAI_API_KEY;
 
     if (!apiKey) {
       throw new Error(
-        'Missing API key: Please set VITE_OPENAI_API_KEY in your environment variables or VITE_OPENAI_API_KEY in your .env file.'
-      )
+        'Missing API key: Please set the appropriate API key in your environment variables.' +
+          (endpoint === endpointMap.liteLLM
+            ? ' (LITELLM_API_KEY)'
+            : ' (OPENAI_API_KEY or VITE_OPENAI_API_KEY)')
+      );
     }
-    
+
     // Create OpenAI client with proper configuration
     const openai = new OpenAI({
-      baseURL: data.endpoint || AI_CONFIG.defaults.endpoint,
+      baseURL: endpoint,
       apiKey,
       timeout: AI_CONFIG.defaults.params.timeout
-    })
+    });
 
     // Filter out error messages and empty messages
     const formattedMessages = data.messages
