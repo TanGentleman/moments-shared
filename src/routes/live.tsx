@@ -1,25 +1,40 @@
-// import { convexQuery, useConvexAction } from '@convex-dev/react-query'
-// import { useSuspenseQuery } from '@tanstack/react-query'
+import { useConvexQuery } from '@convex-dev/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
-// import { api } from '../../convex/_generated/api'
+import { api } from '../../convex/_generated/api'
 import { formatDate } from '../utils/dashboard'
 import ReactMarkdown from 'react-markdown'
 import { ArrowLeft, ArrowRight, RefreshCw, Calendar } from 'lucide-react'
+import { Authenticated, Unauthenticated, AuthLoading } from "convex/react"
+import { SignInFormPassword } from "../CustomSignIn"
+import { LoadingIndicator } from "../components"
+import { AuthenticatedLayout } from "../components/layouts/AuthenticatedLayout"
 
 const TIMEZONE = import.meta.env.VITE_TIMEZONE || "UTC";
 // Navigation component for previous/next entries
-function NavigationControls() {
+function NavigationControls({ 
+  onPrev, 
+  onNext, 
+  hasPrev, 
+  hasNext 
+}: { 
+  onPrev: () => void, 
+  onNext: () => void, 
+  hasPrev: boolean, 
+  hasNext: boolean 
+}) {
   return (
     <div className="flex items-center space-x-4">
       <button
-        disabled={true} // Enable when you implement pagination
+        disabled={!hasPrev}
+        onClick={onPrev}
         className="p-2 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <ArrowLeft className="w-6 h-6 text-white" />
       </button>
       <button
-        disabled={true} // Enable when you implement pagination
+        disabled={!hasNext}
+        onClick={onNext}
         className="p-2 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <ArrowRight className="w-6 h-6 text-white" />
@@ -95,29 +110,34 @@ function LifelogContent({ title, markdown }: { title: string | undefined, markdo
 }
 
 function Live() {
+  return (
+    <>
+      <AuthLoading>
+        <LoadingIndicator />
+      </AuthLoading>
+      <Unauthenticated>
+        <SignInFormPassword />
+      </Unauthenticated>
+      <Authenticated>
+        <AuthenticatedLayout>
+          <LiveContent />
+        </AuthenticatedLayout>
+      </Authenticated>
+    </>
+  );
+}
+
+// LiveContent component containing the existing live page functionality
+function LiveContent() {
   const [isSyncing, setIsSyncing] = useState(false)
+  const [currentPage, setCurrentPage] = useState(0)
+  const [cursor, setCursor] = useState<string | undefined>(undefined)
+  const [previousCursors, setPreviousCursors] = useState<string[]>([])
   
-  // TODO: Replace with actual Convex query when functions are added
-  // const { data } = useSuspenseQuery(convexQuery(api.queries.getPreviewLifelog, {}))
-  const data = {
-    title: "Sample Lifelog Entry",
-    markdown: `# Discussing a toothache and accidentally waking someone up.
-## Toothache
-> my teeth definitely in the pain yesterday.
-> Sorry.
-## Accidentally waking someone up
-> Oh, I accidentally woke him.`,
-    startTime: new Date().toISOString()
-  }
-  
-  // TODO: Replace with actual Convex action when functions are added
-  // const syncAction = useConvexAction(api.actions.sync)
-  
+  // Handle syncing action
   const handleSync = async () => {
     setIsSyncing(true)
     try {
-      // TODO: Replace with actual sync action
-      // await syncAction({ sendNotification: true })
       await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
       console.log('Synced')
     } catch (error) {
@@ -127,22 +147,68 @@ function Live() {
     }
   }
 
-  if (data === null) {
+  // Use the new paginated query
+  const result = useConvexQuery(api.queries.getPaginatedApprovedLifelogs, {
+    cursor: cursor,
+    limit: 1
+  })
+
+  // Handle navigation
+  const goToNextEntry = () => {
+    if (result?.continueCursor) {
+      setPreviousCursors([...previousCursors, cursor as string])
+      setCursor(result.continueCursor)
+      setCurrentPage(currentPage + 1)
+    }
+  }
+
+  const goToPrevEntry = () => {
+    if (previousCursors.length > 0) {
+      // Get the last cursor from the previous ones
+      const newCursors = [...previousCursors]
+      const prevCursor = newCursors.pop()
+      
+      // Update state
+      setPreviousCursors(newCursors)
+      setCursor(prevCursor)
+      setCurrentPage(currentPage - 1)
+    }
+  }
+
+  // Handle loading state
+  if (result === undefined) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-purple-800 text-white flex items-center justify-center">
-        No data available
+        Loading...
       </div>
     )
   }
-  
+
+  // Handle empty state
+  if (result === null || !result.lifelogs || result.lifelogs.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-purple-800 text-white flex items-center justify-center">
+        No approved entries available
+      </div>
+    )
+  }
+
+  const currentLifelog = result.lifelogs[0]
+  const totalEntries = result.totalCount || 0
   const removeTitle = true
-  // Only strip the title if needed, do not apply Slack formatting
-  const formattedMarkdown = data.markdown
+  
+  // Format markdown
+  const formattedMarkdown = currentLifelog.markdown
     ? (removeTitle
-        ? data.markdown.split('\n').slice(1).join('\n')
-        : data.markdown)
+        ? currentLifelog.markdown.split('\n').slice(1).join('\n')
+        : currentLifelog.markdown)
     : ''
-  const creationDate = new Date(data.startTime)
+  
+  const creationDate = new Date(currentLifelog.startTime)
+
+  // Determine if we have previous or next entries
+  const hasPrevious = previousCursors.length > 0
+  const hasNext = !!result.continueCursor
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-purple-800">
@@ -150,20 +216,25 @@ function Live() {
         <div className="max-w-4xl mx-auto">
           {/* Navigation and Sync Bar */}
           <div className="bg-white/10 backdrop-blur-lg rounded-t-2xl p-4 flex items-center justify-between">
-            <NavigationControls />
+            <NavigationControls 
+              onPrev={goToPrevEntry} 
+              onNext={goToNextEntry}
+              hasPrev={hasPrevious}
+              hasNext={hasNext}
+            />
             <DateDisplay date={creationDate} />
             <SyncButton onSync={handleSync} isSyncing={isSyncing} />
           </div>
 
           {/* Journal Content */}
           <LifelogContent 
-            title={data.title} 
+            title={currentLifelog.title} 
             markdown={formattedMarkdown} 
           />
 
-          {/* Entry Counter - Will be enabled when pagination is implemented */}
+          {/* Entry Counter */}
           <div className="mt-4 text-center text-white/80 text-sm font-medium">
-            Entry 1 of 1
+            Entry {currentPage + 1} of {totalEntries}
           </div>
         </div>
       </div>

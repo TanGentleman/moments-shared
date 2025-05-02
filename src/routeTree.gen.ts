@@ -13,6 +13,7 @@
 import { Route as rootRoute } from './routes/__root'
 import { Route as LiveImport } from './routes/live'
 import { Route as DevImport } from './routes/dev'
+import { Route as ApprovalsImport } from './routes/approvals'
 import { Route as IndexImport } from './routes/index'
 
 // Create/Update Routes
@@ -26,6 +27,12 @@ const LiveRoute = LiveImport.update({
 const DevRoute = DevImport.update({
   id: '/dev',
   path: '/dev',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const ApprovalsRoute = ApprovalsImport.update({
+  id: '/approvals',
+  path: '/approvals',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -44,6 +51,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/approvals': {
+      id: '/approvals'
+      path: '/approvals'
+      fullPath: '/approvals'
+      preLoaderRoute: typeof ApprovalsImport
       parentRoute: typeof rootRoute
     }
     '/dev': {
@@ -67,12 +81,14 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/approvals': typeof ApprovalsRoute
   '/dev': typeof DevRoute
   '/live': typeof LiveRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/approvals': typeof ApprovalsRoute
   '/dev': typeof DevRoute
   '/live': typeof LiveRoute
 }
@@ -80,27 +96,30 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
+  '/approvals': typeof ApprovalsRoute
   '/dev': typeof DevRoute
   '/live': typeof LiveRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dev' | '/live'
+  fullPaths: '/' | '/approvals' | '/dev' | '/live'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dev' | '/live'
-  id: '__root__' | '/' | '/dev' | '/live'
+  to: '/' | '/approvals' | '/dev' | '/live'
+  id: '__root__' | '/' | '/approvals' | '/dev' | '/live'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApprovalsRoute: typeof ApprovalsRoute
   DevRoute: typeof DevRoute
   LiveRoute: typeof LiveRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApprovalsRoute: ApprovalsRoute,
   DevRoute: DevRoute,
   LiveRoute: LiveRoute,
 }
@@ -116,12 +135,16 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
+        "/approvals",
         "/dev",
         "/live"
       ]
     },
     "/": {
       "filePath": "index.tsx"
+    },
+    "/approvals": {
+      "filePath": "approvals.tsx"
     },
     "/dev": {
       "filePath": "dev.tsx"
