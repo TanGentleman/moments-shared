@@ -18,6 +18,10 @@ import type * as conversations from "../conversations.js";
 import type * as customAuth from "../customAuth.js";
 import type * as errors from "../errors.js";
 import type * as http from "../http.js";
+import type * as mutations from "../mutations.js";
+import type * as populateTestData from "../populateTestData.js";
+import type * as queries from "../queries.js";
+import type * as types from "../types.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -33,6 +37,10 @@ declare const fullApi: ApiFromModules<{
   customAuth: typeof customAuth;
   errors: typeof errors;
   http: typeof http;
+  mutations: typeof mutations;
+  populateTestData: typeof populateTestData;
+  queries: typeof queries;
+  types: typeof types;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,
