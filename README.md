@@ -4,6 +4,12 @@
 
 A modern chat template built with TanStack Router and Claude AI integration features a clean and responsive interface.
 
+**New!**  
+- Added `/dev` and `/live` routes:
+  - `/dev` is a developer dashboard for internal tools and testing.
+  - `/live` provides a paginated, read-only view of approved lifelog entries with navigation and sync controls.
+- Both routes require authentication and use the new Convex backend for persistent storage and approval workflows.
+
 **⚡ View demo:** [https://tanstack-starter.netlify.app/](https://tanstack-starter.netlify.app/)
 
 ## Table of Contents
