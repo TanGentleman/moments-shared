@@ -10,6 +10,16 @@ import { Input } from './ui/input';
 import { CheckCircle, XCircle, Clock, Tag, Plus, X } from 'lucide-react';
 import { formatDate } from '../utils/dashboard';
 
+const TIMEZONE = import.meta.env.VITE_TIMEZONE || "UTC";
+
+function SimpleError({ error }: { error: unknown }) {
+  return (
+    <div className="p-4 bg-red-100 text-red-700 rounded">
+      Error: {error instanceof Error ? error.message : String(error)}
+    </div>
+  );
+}
+
 const markdownStyles = `
 .markdown-content { color: #222; font-size: 1rem; }
 .markdown-content h1, .markdown-content h2, .markdown-content h3, .markdown-content h4, .markdown-content h5, .markdown-content h6 { color: #1e293b; font-weight: 700; }
@@ -22,27 +32,25 @@ const markdownStyles = `
 .markdown-content em { color: #334155; }
 `;
 
-type ApprovalStatus = "pending" | "approved" | "rejected";
-const TIMEZONE = import.meta.env.VITE_TIMEZONE || "UTC";
-
-function StatusBadge({ status }: { status?: ApprovalStatus }) {
-  const statusMap = {
-    approved: { color: "bg-green-500 hover:bg-green-600", icon: <CheckCircle className="w-4 h-4 mr-1" />, label: "Approved" },
-    rejected: { color: "bg-red-500 hover:bg-red-600", icon: <XCircle className="w-4 h-4 mr-1" />, label: "Rejected" },
-    pending:  { color: "bg-yellow-500 hover:bg-yellow-600", icon: <Clock className="w-4 h-4 mr-1" />, label: "Pending" }
-  };
-  const { color, icon, label } = statusMap[status ?? "pending"];
-  return <Badge className={color}>{icon} {label}</Badge>;
+function StatusBadge({ status }: { status?: "pending" | "approved" | "rejected" }) {
+  let color = "bg-yellow-500", IconComp = Clock, label = "Pending";
+  if (status === "approved") { color = "bg-green-500"; IconComp = CheckCircle; label = "Approved"; }
+  if (status === "rejected") { color = "bg-red-500"; IconComp = XCircle; label = "Rejected"; }
+  return (
+    <Badge className={color + " text-white flex items-center"}>
+      <IconComp className="w-4 h-4 mr-1" /> {label}
+    </Badge>
+  );
 }
 
 function TagBadge({ name, color, onRemove }: { name: string; color?: string; onRemove?: () => void }) {
   return (
-    <Badge className="mr-2 mb-2" style={{ backgroundColor: color || '#6366F1', color: 'white' }}>
-      <Tag className="w-3 h-3 mr-1" />
+    <Badge className="mr-2 mb-2 flex items-center" style={{ backgroundColor: color || '#6366F1', color: 'white' }}>
+      <Tag className="w-4 h-4 mr-1" />
       {name}
       {onRemove && (
-        <button onClick={onRemove} className="ml-1 hover:text-gray-200">
-          <X className="w-3 h-3" />
+        <button onClick={onRemove} className="ml-1 hover:text-gray-200" aria-label="Remove tag" type="button">
+          <X className="w-4 h-4" />
         </button>
       )}
     </Badge>
@@ -50,6 +58,14 @@ function TagBadge({ name, color, onRemove }: { name: string; color?: string; onR
 }
 
 export function ApprovalWorkflow() {
+  try {
+    return <ApprovalWorkflowContent />;
+  } catch (e) {
+    return <SimpleError error={e} />;
+  }
+}
+
+function ApprovalWorkflowContent() {
   const [selectedLifelogId, setSelectedLifelogId] = useState<string | null>(null);
   const [tagInput, setTagInput] = useState('');
   const [commentInput, setCommentInput] = useState('');

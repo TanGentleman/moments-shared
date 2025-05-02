@@ -14,8 +14,17 @@ export const formatDate = (
       minute: "2-digit",
       second: "2-digit",
     };
+    
     if (timezone) {
-      options.timeZone = timezone;
+      try {
+        // Test if the timezone is valid
+        new Intl.DateTimeFormat("en-US", { timeZone: timezone });
+        options.timeZone = timezone;
+      } catch (error) {
+        console.warn(`Invalid timezone: ${timezone}, falling back to local timezone`);
+        // Continue without setting timezone, will use local browser timezone
+      }
     }
+    
     return d.toLocaleString("en-US", options);
   };
