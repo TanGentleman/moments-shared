@@ -129,7 +129,7 @@ export const list = query({
     }
     
     // Visibility scope filter (admins can see all)
-    if (args.filters?.visibilityScope && userRole !== UserRole.OWNER && userRole !== UserRole.ADMIN) {
+    if (args.filters?.visibilityScope !== undefined && userRole !== UserRole.OWNER && userRole !== UserRole.ADMIN) {
       const allowedRoles = TAG_VISIBILITY[args.filters.visibilityScope] || [];
       if (!allowedRoles.includes(userRole)) {
         filteredLifelogs = [];

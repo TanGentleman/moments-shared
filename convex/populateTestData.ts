@@ -38,8 +38,8 @@ export const populateApprovalData = mutation({
     
     const tagData = [
       { name: "Important", color: "#EF4444", visibilityScope: "public" }, // Red
-      { name: "Personal", color: "#3B82F6", visibilityScope: "user-only" },  // Blue
-      { name: "Work", color: "#10B981", visibilityScope: "team-only" },      // Green
+      { name: "Personal", color: "#3B82F6", visibilityScope: "owner-only" },  // Blue
+      { name: "Work", color: "#10B981", visibilityScope: "friends" },      // Green - changed from team-only to friends
       { name: "Health", color: "#8B5CF6", visibilityScope: "admin-only" }     // Purple
     ];
     
@@ -141,6 +141,58 @@ export const populateApprovalData = mutation({
         tagIds,
         lifelogIds
       }
+    };
+  }
+});
+
+/**
+ * This mutation will destructively clear all data from specified tables:
+ * - tags
+ * - lifelogs
+ * - lifelogTags
+ * - approvals
+ * 
+ * Run with: npx convex run populateTestData:clearTables
+ */
+export const clearTables = mutation({
+  handler: async (ctx) => {
+    const identity = await requireAuth(ctx, Permission.OWNER_ACCESS);
+
+    // Use the authenticated user's ID
+    const userId = identity.name || "System";
+    console.log(`Running as user: ${userId}`);
+    
+    // Clear lifelogTags table
+    console.log("Clearing lifelogTags table...");
+    const lifelogTags = await ctx.db.query("lifelogTags").collect();
+    for (const tag of lifelogTags) {
+      await ctx.db.delete(tag._id);
+    }
+    
+    // Clear approvals table
+    console.log("Clearing approvals table...");
+    const approvals = await ctx.db.query("approvals").collect();
+    for (const approval of approvals) {
+      await ctx.db.delete(approval._id);
+    }
+    
+    // Clear lifelogs table
+    console.log("Clearing lifelogs table...");
+    const lifelogs = await ctx.db.query("lifelogs").collect();
+    for (const lifelog of lifelogs) {
+      await ctx.db.delete(lifelog._id);
+    }
+    
+    // Clear tags table
+    console.log("Clearing tags table...");
+    const tags = await ctx.db.query("tags").collect();
+    for (const tag of tags) {
+      await ctx.db.delete(tag._id);
+    }
+    
+    return {
+      status: "success",
+      message: "All tables have been cleared successfully!"
     };
   }
 }); 
