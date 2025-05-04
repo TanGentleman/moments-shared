@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
@@ -11,6 +11,14 @@ import { CheckCircle, XCircle, Clock, Tag, Plus, X } from 'lucide-react';
 import { formatDate } from '../utils/dashboard';
 
 const TIMEZONE = import.meta.env.VITE_TIMEZONE || "UTC";
+
+// Visibility scopes available in the system
+const VISIBILITY_SCOPES = [
+  { id: "owner-only", name: "Owner Only", color: "bg-red-500" },
+  { id: "admin-only", name: "Admin Only", color: "bg-orange-500" },
+  { id: "friends", name: "Friends", color: "bg-blue-500" },
+  { id: "public", name: "Public", color: "bg-green-500" }
+];
 
 function SimpleError({ error }: { error: unknown }) {
   return (
@@ -43,7 +51,21 @@ function StatusBadge({ status }: { status?: "pending" | "approved" | "rejected" 
   );
 }
 
+// function VisibilityBadge({ scope }: { scope: string }) {
+//   const scopeInfo = VISIBILITY_SCOPES.find(s => s.id === scope) || 
+//     { id: scope, name: scope, color: "bg-gray-500" };
+  
+//   return (
+//     <Badge className={`${scopeInfo.color} text-white ml-2`}>
+//       {scopeInfo.name}
+//     </Badge>
+//   );
+// }
+
 function TagBadge({ name, color, onRemove }: { name: string; color?: string; onRemove?: () => void }) {
+  // Don't show internal scope tags in the UI
+  if (name.startsWith("scope:")) return null;
+  
   return (
     <Badge className="mr-2 mb-2 flex items-center" style={{ backgroundColor: color || '#6366F1', color: 'white' }}>
       <Tag className="w-4 h-4 mr-1" />
@@ -69,6 +91,7 @@ function ApprovalWorkflowContent() {
   const [selectedLifelogId, setSelectedLifelogId] = useState<string | null>(null);
   const [tagInput, setTagInput] = useState('');
   const [commentInput, setCommentInput] = useState('');
+  const [visibilityScope, setVisibilityScope] = useState<string>('admin-only');
 
   const pendingLifelogs = useQuery(api.queries.getPendingApprovals);
   const selectedLifelog = useQuery(
@@ -82,10 +105,31 @@ function ApprovalWorkflowContent() {
   const addTag = useMutation(api.mutations.addTagToLifelog);
   const removeTag = useMutation(api.mutations.removeTagFromLifelog);
   const createTag = useMutation(api.mutations.createTag);
+  const setLifelogVisibility = useMutation(api.mutations.setLifelogVisibility);
+
+  // Detect current visibility scope from tags
+  useEffect(() => {
+    if (selectedLifelog && selectedLifelog.tags) {
+      // Look for scope tags
+      for (const tag of selectedLifelog.tags) {
+        if (tag.name.startsWith('scope:')) {
+          const scope = tag.name.replace('scope:', '');
+          setVisibilityScope(scope);
+          return;
+        }
+      }
+      // Default to admin-only if no scope tag found
+      setVisibilityScope('admin-only');
+    }
+  }, [selectedLifelog]);
 
   const handleApprove = async () => {
     if (!selectedLifelogId) return;
-    await approveLifelog({ lifelogId: selectedLifelogId, comments: commentInput });
+    await approveLifelog({ 
+      lifelogId: selectedLifelogId, 
+      comments: commentInput,
+      visibilityScope
+    });
     setCommentInput('');
   };
 
@@ -115,6 +159,15 @@ function ApprovalWorkflowContent() {
   const handleRemoveTag = async (tagId: Id<"tags">) => {
     if (!selectedLifelogId) return;
     await removeTag({ lifelogId: selectedLifelogId, tagId });
+  };
+
+  const handleChangeVisibility = async (newScope: string) => {
+    if (!selectedLifelogId) return;
+    setVisibilityScope(newScope);
+    await setLifelogVisibility({ 
+      lifelogId: selectedLifelogId, 
+      visibilityScope: newScope 
+    });
   };
 
   if (!pendingLifelogs) {
@@ -168,6 +221,30 @@ function ApprovalWorkflowContent() {
                 </div>
               </CardHeader>
               <CardContent>
+                {/* Visibility setting */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Visibility Setting
+                  </label>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    {VISIBILITY_SCOPES.map(scope => (
+                      <button
+                        key={scope.id}
+                        type="button"
+                        className={`px-3 py-1 rounded-md text-sm ${
+                          visibilityScope === scope.id 
+                            ? 'bg-purple-100 border-2 border-purple-500' 
+                            : 'bg-gray-100 border border-gray-300'
+                        }`}
+                        onClick={() => handleChangeVisibility(scope.id)}
+                      >
+                        {scope.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
                 {/* Tags section */}
                 <div className="mb-4">
                   <div className="flex flex-wrap mb-2">

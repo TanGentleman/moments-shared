@@ -11,16 +11,14 @@
 
 import { mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { Permission, requireAuth } from "./admin";
 
 export const populateApprovalData = mutation({
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (identity === null) {
-      throw new Error("Authentication required. Please log in first.");
-    }
+    const identity = await requireAuth(ctx, Permission.OWNER_ACCESS);
 
     // Use the authenticated user's ID
-    const userId = identity.subject;
+    const userId = identity.name || "System";
     console.log(`Running as user: ${userId}`);
     
     // Check if we already have test data to avoid duplicates
@@ -39,21 +37,33 @@ export const populateApprovalData = mutation({
     const tagIds = [];
     
     const tagData = [
-      { name: "Important", color: "#EF4444" }, // Red
-      { name: "Personal", color: "#3B82F6" },  // Blue
-      { name: "Work", color: "#10B981" },      // Green
-      { name: "Health", color: "#8B5CF6" }     // Purple
+      { name: "Important", color: "#EF4444", visibilityScope: "public" }, // Red
+      { name: "Personal", color: "#3B82F6", visibilityScope: "user-only" },  // Blue
+      { name: "Work", color: "#10B981", visibilityScope: "team-only" },      // Green
+      { name: "Health", color: "#8B5CF6", visibilityScope: "admin-only" }     // Purple
     ];
     
+    // Check for existing tags to avoid duplicates
     for (const tag of tagData) {
-      const tagId = await ctx.db.insert("tags", {
-        name: tag.name,
-        color: tag.color,
-        createdBy: userId,
-        createdAt: Date.now()
-      });
-      tagIds.push(tagId);
-      console.log(`Created tag: ${tag.name}`);
+      const existingTag = await ctx.db
+        .query("tags")
+        .filter(q => q.eq(q.field("name"), tag.name))
+        .first();
+      
+      if (existingTag) {
+        tagIds.push(existingTag._id);
+        console.log(`Tag already exists: ${tag.name}`);
+      } else {
+        const tagId = await ctx.db.insert("tags", {
+          name: tag.name,
+          color: tag.color,
+          visibilityScope: tag.visibilityScope,
+          createdBy: userId,
+          createdAt: Date.now()
+        });
+        tagIds.push(tagId);
+        console.log(`Created tag: ${tag.name}`);
+      }
     }
     
     // 2. Create sample lifelogs

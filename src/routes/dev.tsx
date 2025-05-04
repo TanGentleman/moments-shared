@@ -1,24 +1,24 @@
-import { Authenticated, Unauthenticated, AuthLoading } from "convex/react";
-import { SignInFormPassword } from "../CustomSignIn";
 import { createFileRoute } from '@tanstack/react-router'
 import { LoadingIndicator } from "../components";
 import { AuthenticatedLayout } from "../components/layouts/AuthenticatedLayout";
 import { DevContent } from "../components/DevContent";
+import { SignInFormPassword } from "../CustomSignIn";
+import { useCurrentUser } from "../useCurrentUser";
 
 function Dev() {
+  const { isLoading, isAuthenticated } = useCurrentUser();
+  
   return (
     <>
-      <AuthLoading>
+      {isLoading ? (
         <LoadingIndicator />
-      </AuthLoading>
-      <Unauthenticated>
-        <SignInFormPassword />
-      </Unauthenticated>
-      <Authenticated>
+      ) : isAuthenticated ? (
         <AuthenticatedLayout>
           <DevContent />
         </AuthenticatedLayout>
-      </Authenticated>
+      ) : (
+        <SignInFormPassword />
+      )}
     </>
   );
 }

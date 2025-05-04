@@ -1,6 +1,6 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { query } from "./_generated/server";
- 
+
 export const currentUser = query({
   args: {},
   handler: async (ctx) => {
@@ -8,6 +8,7 @@ export const currentUser = query({
     if (userId === null) {
       return null;
     }
-    return await ctx.db.get(userId);
+    const user = await ctx.db.get(userId);
+    return user;
   },
 });

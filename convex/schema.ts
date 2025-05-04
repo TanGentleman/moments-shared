@@ -41,17 +41,16 @@ export default defineSchema({
     startTime: v.number(),
     endTime: v.number(),
     embeddingId: v.union(v.id("markdownEmbeddings"), v.null()),
-  }),
-    // TODO: Add indexes
-    // .index("by_start_time", ["startTime"])
-    // .index("by_lifelog_id", ["lifelogId"])
-    // .searchIndex("search_title_content", {
-    //   searchField: "title",
-    // })
-    // .searchIndex("search_markdown_content", {
-    //   searchField: "markdown",
-    //   filterFields: ["lifelogId"],
-    // }),
+  })
+    .index("by_start_time", ["startTime"])
+    .index("by_lifelog_id", ["lifelogId"])
+    .searchIndex("search_title_content", {
+      searchField: "title",
+    })
+    .searchIndex("search_markdown_content", {
+      searchField: "markdown",
+      filterFields: ["lifelogId"],
+    }),
 
   metadata: defineTable({
     startTime: v.number(),
@@ -104,11 +103,9 @@ export default defineSchema({
     reviewedAt: v.number(),
     comments: v.optional(v.string()),
   })
-    // TODO: Add indexes
-    // .index("by_lifelog_id", ["lifelogId"])
+    .index("by_lifelog_id", ["lifelogId"])
     .index("by_status", ["status"])
-    // .index("by_reviewer", ["reviewerId"])
-  ,
+    .index("by_reviewer", ["reviewerId"]),
     
   tags: defineTable({
     name: v.string(),
@@ -116,12 +113,12 @@ export default defineSchema({
     color: v.optional(v.string()),
     createdBy: v.string(),
     createdAt: v.number(),
+    visibilityScope: v.optional(v.string()),
   })
-    .index("by_name", ["name"]),
-    // TODO: Add search index
-    // .searchIndex("search_tags", {
-    //   searchField: "name",
-    // }),
+    .index("by_name", ["name"])
+    .searchIndex("search_tags", {
+      searchField: "name",
+    }),
     
   lifelogTags: defineTable({
     lifelogId: v.string(),
@@ -129,8 +126,7 @@ export default defineSchema({
     addedBy: v.string(),
     addedAt: v.number(),
   })
-    // TODO: Add indexes
-    // .index("by_lifelog", ["lifelogId"])
-    // .index("by_tag", ["tagId"])
-    // .index("by_lifelog_and_tag", ["lifelogId", "tagId"]),
+    .index("by_lifelog", ["lifelogId"])
+    .index("by_tag", ["tagId"])
+    .index("by_lifelog_and_tag", ["lifelogId", "tagId"]),
 });

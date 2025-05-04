@@ -11,12 +11,19 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as SeedImport } from './routes/seed'
 import { Route as LiveImport } from './routes/live'
 import { Route as DevImport } from './routes/dev'
 import { Route as ApprovalsImport } from './routes/approvals'
 import { Route as IndexImport } from './routes/index'
 
 // Create/Update Routes
+
+const SeedRoute = SeedImport.update({
+  id: '/seed',
+  path: '/seed',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const LiveRoute = LiveImport.update({
   id: '/live',
@@ -74,6 +81,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LiveImport
       parentRoute: typeof rootRoute
     }
+    '/seed': {
+      id: '/seed'
+      path: '/seed'
+      fullPath: '/seed'
+      preLoaderRoute: typeof SeedImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -84,6 +98,7 @@ export interface FileRoutesByFullPath {
   '/approvals': typeof ApprovalsRoute
   '/dev': typeof DevRoute
   '/live': typeof LiveRoute
+  '/seed': typeof SeedRoute
 }
 
 export interface FileRoutesByTo {
@@ -91,6 +106,7 @@ export interface FileRoutesByTo {
   '/approvals': typeof ApprovalsRoute
   '/dev': typeof DevRoute
   '/live': typeof LiveRoute
+  '/seed': typeof SeedRoute
 }
 
 export interface FileRoutesById {
@@ -99,14 +115,15 @@ export interface FileRoutesById {
   '/approvals': typeof ApprovalsRoute
   '/dev': typeof DevRoute
   '/live': typeof LiveRoute
+  '/seed': typeof SeedRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/approvals' | '/dev' | '/live'
+  fullPaths: '/' | '/approvals' | '/dev' | '/live' | '/seed'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/approvals' | '/dev' | '/live'
-  id: '__root__' | '/' | '/approvals' | '/dev' | '/live'
+  to: '/' | '/approvals' | '/dev' | '/live' | '/seed'
+  id: '__root__' | '/' | '/approvals' | '/dev' | '/live' | '/seed'
   fileRoutesById: FileRoutesById
 }
 
@@ -115,6 +132,7 @@ export interface RootRouteChildren {
   ApprovalsRoute: typeof ApprovalsRoute
   DevRoute: typeof DevRoute
   LiveRoute: typeof LiveRoute
+  SeedRoute: typeof SeedRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -122,6 +140,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApprovalsRoute: ApprovalsRoute,
   DevRoute: DevRoute,
   LiveRoute: LiveRoute,
+  SeedRoute: SeedRoute,
 }
 
 export const routeTree = rootRoute
@@ -137,7 +156,8 @@ export const routeTree = rootRoute
         "/",
         "/approvals",
         "/dev",
-        "/live"
+        "/live",
+        "/seed"
       ]
     },
     "/": {
@@ -151,6 +171,9 @@ export const routeTree = rootRoute
     },
     "/live": {
       "filePath": "live.tsx"
+    },
+    "/seed": {
+      "filePath": "seed.tsx"
     }
   }
 }

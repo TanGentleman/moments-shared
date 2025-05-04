@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 export function DevContent() {
   const userData = useQuery(api.customAuth.currentUser);
   const tags = useQuery(api.queries.listTags);
-  const pendingApprovals = useQuery(api.queries.getPendingApprovals);
+  // const pendingApprovals = useQuery(api.queries.getPendingApprovals);
   const [userStats, setUserStats] = useState({
     accountAge: 0,
     loginCount: 0,
@@ -52,7 +52,7 @@ export function DevContent() {
           <div className="bg-gray-700 p-4 rounded overflow-auto">
             <div className="grid grid-cols-2 gap-2">
               <p className="text-lg">Available Tags: <span className="font-medium">{tags?.length || 0}</span></p>
-              <p className="text-lg">Pending Approvals: <span className="font-medium">{pendingApprovals?.length || 0}</span></p>
+              {/* <p className="text-lg">Pending Approvals: <span className="font-medium">{pendingApprovals?.length || 0}</span></p> */}
             </div>
           </div>
         </div>
