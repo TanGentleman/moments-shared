@@ -6,6 +6,7 @@ import {
 } from '@tanstack/react-router'
 // import { TanStackRouterDevtools } from '@tanstack/router-devtools'
 import { ConvexClientProvider } from '../convex'
+import { Navbar } from '../components'
 
 import appCss from '../styles.css?url'
 
@@ -33,6 +34,7 @@ export const Route = createRootRoute({
 
   component: () => (
     <RootDocument>
+      <Navbar />
       <Outlet />
       {/* <TanStackRouterDevtools /> */}
     </RootDocument>
