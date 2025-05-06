@@ -9,11 +9,19 @@
  * Run with: npx convex run populateTestData:populateApprovalData
  */
 
-import { mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { mutation } from "./_generated/server";
 import { Permission, requireAuth } from "./admin";
 
 export const populateApprovalData = mutation({
+  returns: {
+    status: v.string(),
+    message: v.string(),
+    data: v.optional(v.object({
+      tagIds: v.array(v.id("tags")),
+      lifelogIds: v.array(v.id("lifelogs"))
+    }))
+  },
   handler: async (ctx) => {
     const identity = await requireAuth(ctx, Permission.OWNER_ACCESS);
 
@@ -24,7 +32,7 @@ export const populateApprovalData = mutation({
     // Check if we already have test data to avoid duplicates
     const existingLifelogs = await ctx.db
       .query("lifelogs")
-      .filter(q => q.eq(q.field("lifelogId"), "test-lifelog-1"))
+      .withIndex("by_lifelog_id", (q) => q.eq("lifelogId", "test-lifelog-1"))
       .first();
     
     if (existingLifelogs) {
