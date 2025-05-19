@@ -1,5 +1,6 @@
 import { UserRole, getUserRole } from "../admin";
-import { Id } from "../_generated/dataModel";
+import { QueryCtx } from "../_generated/server";
+import { MutationCtx } from "../_generated/server";
 
 /**
  * Tag visibility scopes mapping to user roles
@@ -13,25 +14,11 @@ export const TAG_VISIBILITY: Record<string, UserRole[]> = {
 };
 
 /**
- * Extended tag type that includes the visibility scope property
- */
-export interface Tag {
-  _id: Id<"tags">;
-  _creationTime: number;
-  name: string;
-  color?: string;
-  description?: string;
-  createdBy: string;
-  createdAt: number;
-  visibilityScope?: string;
-}
-
-/**
  * Helper function to check if a user has access to a lifelog based on its tags
- * Uses the by_lifelog index for efficient querying
+ * Uses the by_lifelog_id index for efficient querying
  */
 export const hasAccessToLifelog = async (
-  ctx: any,
+  ctx: QueryCtx | MutationCtx,
   lifelogId: string,
   userRole: UserRole
 ) => {
@@ -40,10 +27,10 @@ export const hasAccessToLifelog = async (
     return true;
   }
   
-  // Get tags for this lifelog using the by_lifelog index
+  // Get tags for this lifelog using the by_lifelog_id index
   const lifelogTags = await ctx.db
     .query("lifelogTags")
-    .withIndex("by_lifelog", (q: any) => q.eq("lifelogId", lifelogId))
+    .withIndex("by_lifelog_id", (q) => q.eq("lifelogId", lifelogId))
     .collect();
     
   // If no tags, default to admin-only access
@@ -53,7 +40,7 @@ export const hasAccessToLifelog = async (
   
   // Check each tag's visibility scope
   for (const lifelogTag of lifelogTags) {
-    const tag = await ctx.db.get(lifelogTag.tagId) as Tag | null;
+    const tag = await ctx.db.get(lifelogTag.tagId);
     if (!tag) continue;
     
     // If tag has visibility scope, check if user role is allowed

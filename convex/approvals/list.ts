@@ -34,6 +34,9 @@ export const list = query({
           },
         });
       }
+      else {
+        console.error(`Lifelog not found for approval ${approval._id}`);
+      }
     }
 
     return result;

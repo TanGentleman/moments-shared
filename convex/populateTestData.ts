@@ -26,8 +26,8 @@ export const populateApprovalData = mutation({
     const identity = await requireAuth(ctx, Permission.OWNER_ACCESS);
 
     // Use the authenticated user's ID
-    const userId = identity.name || "System";
-    console.log(`Running as user: ${userId}`);
+    const username = identity.email || "System";
+    console.log(`Running as user: ${username}`);
     
     // Check if we already have test data to avoid duplicates
     const existingLifelogs = await ctx.db
@@ -55,7 +55,7 @@ export const populateApprovalData = mutation({
     for (const tag of tagData) {
       const existingTag = await ctx.db
         .query("tags")
-        .filter(q => q.eq(q.field("name"), tag.name))
+        .withIndex("by_name", (q) => q.eq(("name"), tag.name))
         .first();
       
       if (existingTag) {
@@ -66,8 +66,7 @@ export const populateApprovalData = mutation({
           name: tag.name,
           color: tag.color,
           visibilityScope: tag.visibilityScope,
-          createdBy: userId,
-          createdAt: Date.now()
+          createdBy: username,
         });
         tagIds.push(tagId);
         console.log(`Created tag: ${tag.name}`);
@@ -116,7 +115,7 @@ export const populateApprovalData = mutation({
       await ctx.db.insert("approvals", {
         lifelogId: lifelog.lifelogId,
         status: "pending",
-        reviewerId: userId,
+        reviewerId: username,
         reviewedAt: Date.now(),
         comments: ""
       });
@@ -136,8 +135,7 @@ export const populateApprovalData = mutation({
       await ctx.db.insert("lifelogTags", {
         lifelogId: assoc.lifelogId,
         tagId: tagIds[assoc.tagIdx],
-        addedBy: userId,
-        addedAt: Date.now()
+        addedBy: username,
       });
       console.log(`Associated tag with lifelog: ${assoc.lifelogId}`);
     }

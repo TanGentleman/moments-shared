@@ -4,6 +4,17 @@ import { authTables } from "@convex-dev/auth/server";
 
 export default defineSchema({
   ...authTables,
+  users: defineTable({
+    name: v.optional(v.string()),
+    image: v.optional(v.string()),
+    email: v.optional(v.string()),
+    emailVerificationTime: v.optional(v.number()),
+    phone: v.optional(v.string()),
+    phoneVerificationTime: v.optional(v.number()),
+    isAnonymous: v.optional(v.boolean()),
+    // other "users" fields...
+    role: v.optional(v.union(v.literal("owner"), v.literal("admin"), v.literal("friend"), v.literal("visitor"))),
+  }).index("email", ["email"]),
   conversations: defineTable({
     title: v.string(),
     messages: v.array(
@@ -112,8 +123,7 @@ export default defineSchema({
     description: v.optional(v.string()),
     color: v.optional(v.string()),
     createdBy: v.string(),
-    createdAt: v.number(),
-    visibilityScope: v.optional(v.string()),
+    visibilityScope: v.string(),
   })
     .index("by_name", ["name"])
     .searchIndex("search_tags", {
@@ -124,9 +134,8 @@ export default defineSchema({
     lifelogId: v.string(),
     tagId: v.id("tags"),
     addedBy: v.string(),
-    addedAt: v.number(),
   })
-    .index("by_lifelog", ["lifelogId"])
-    .index("by_tag", ["tagId"])
+    .index("by_lifelog_id", ["lifelogId"])
+    .index("by_tag_id", ["tagId"])
     .index("by_lifelog_and_tag", ["lifelogId", "tagId"]),
 });

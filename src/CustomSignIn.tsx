@@ -7,7 +7,7 @@ export function SignInFormPassword() {
       <h2 className="font-semibold text-2xl tracking-tight">
         Sign in to your account
       </h2>
-      <SignInWithPassword disableSignUp={true} />
+      <SignInWithPassword disableSignUp={false} />
       <Toaster />
     </div>
   );

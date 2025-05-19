@@ -13,6 +13,7 @@ import {
   Permission, 
   UserRole,
   getUserRole,
+  hasPermission,
 } from "../admin";
 
 import { hasAccessToLifelog } from "./access";
@@ -56,7 +57,7 @@ export const get = query({
 
 /**
  * Fetch a single lifelog by ID with tags
- * Uses the by_lifelog_id and by_lifelog indexes for efficient querying
+ * Uses the by_lifelog_id and by_lifelog_id indexes for efficient querying
  */
 export const withTags = query({
   args: { lifelogId: v.string() },
@@ -80,7 +81,7 @@ export const withTags = query({
 
     const lifelogTags = await ctx.db
       .query("lifelogTags")
-      .withIndex("by_lifelog", q => q.eq("lifelogId", args.lifelogId))
+      .withIndex("by_lifelog_id", q => q.eq("lifelogId", args.lifelogId))
       .collect();
 
     const tags = [];
@@ -98,7 +99,7 @@ export const withTags = query({
 
 /**
  * Fetch a complete lifelog with approval and tags
- * Uses the by_lifelog_id, by_lifelog, and by_lifelog_id indexes for efficient querying
+ * Uses the by_lifelog_id, by_lifelog_id, and by_lifelog_id indexes for efficient querying
  */
 export const complete = query({
   args: { lifelogId: v.string() },
@@ -114,7 +115,7 @@ export const complete = query({
     if (!lifelog) return null;
     
     // Special case: Always allow access during approval workflow for admins
-    const isApprovalWorkflow = hasPermission(identity, Permission.ADMIN_ACCESS);
+    const isApprovalWorkflow = hasPermission(userRole, Permission.ADMIN_ACCESS);
     
     if (!isApprovalWorkflow) {
       // Check regular access based on tags
@@ -132,7 +133,7 @@ export const complete = query({
 
     const lifelogTags = await ctx.db
       .query("lifelogTags")
-      .withIndex("by_lifelog", q => q.eq("lifelogId", args.lifelogId))
+      .withIndex("by_lifelog_id", q => q.eq("lifelogId", args.lifelogId))
       .collect();
 
     const tags = [];
@@ -208,13 +209,3 @@ export const latest = query({
     } as LifelogWithApproval;
   },
 });
-
-// Import missing function from admin
-function hasPermission(identity: any, permission: Permission): boolean {
-  const userRole = getUserRole(identity);
-  const permissions = ROLE_PERMISSIONS[userRole];
-  return permissions.includes(permission);
-}
-
-// Import ROLE_PERMISSIONS constant
-import { ROLE_PERMISSIONS } from "../admin"; 

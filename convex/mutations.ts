@@ -4,18 +4,6 @@ import { Id } from "./_generated/dataModel";
 import { requireAuth, Permission, UserRole, getUserRole } from "./admin";
 import { TAG_VISIBILITY } from "./queries";
 
-// Extended tag type with visibility scope
-interface Tag {
-  _id: Id<"tags">;
-  _creationTime: number;
-  name: string;
-  color?: string;
-  description?: string;
-  createdBy: string;
-  createdAt: number;
-  visibilityScope?: string;
-}
-
 /**
  * Approve a lifelog
  */
@@ -33,7 +21,7 @@ export const approveLifelog = mutation({
     // Check if the lifelog exists
     const lifelog = await ctx.db
       .query("lifelogs")
-      .filter(q => q.eq(q.field("lifelogId"), args.lifelogId))
+      .withIndex("by_lifelog_id", (q) => q.eq(("lifelogId"), args.lifelogId))
       .first();
       
     if (!lifelog) {
@@ -43,7 +31,7 @@ export const approveLifelog = mutation({
     // Check if an approval record already exists
     const existingApproval = await ctx.db
       .query("approvals")
-      .filter(q => q.eq(q.field("lifelogId"), args.lifelogId))
+      .withIndex("by_lifelog_id", (q) => q.eq(("lifelogId"), args.lifelogId))
       .first();
     
     // Apply visibility scope tag if provided
@@ -54,8 +42,8 @@ export const approveLifelog = mutation({
       // Check if tag already exists
       const existingTag = await ctx.db
         .query("tags")
-        .filter(q => q.eq(q.field("name"), scopeTagName))
-        .first() as Tag | null;
+        .withIndex("by_name", (q) => q.eq(("name"), scopeTagName))
+        .first();
         
       let tagId: Id<"tags">;
       
@@ -68,7 +56,6 @@ export const approveLifelog = mutation({
           description: `Visibility: ${args.visibilityScope}`,
           color: "#5D8AA8", // Default blue for visibility tags
           createdBy: identity.email!,
-          createdAt: Date.now(),
           visibilityScope: args.visibilityScope,
         });
       }
@@ -76,11 +63,9 @@ export const approveLifelog = mutation({
       // Add the tag to the lifelog if not already there
       const existingAssociation = await ctx.db
         .query("lifelogTags")
-        .filter(q => 
-          q.and(
-            q.eq(q.field("lifelogId"), args.lifelogId),
-            q.eq(q.field("tagId"), tagId)
-          )
+        .withIndex("by_lifelog_and_tag", (q) => 
+          q.eq("lifelogId", args.lifelogId)
+           .eq("tagId", tagId)
         )
         .first();
       
@@ -89,7 +74,6 @@ export const approveLifelog = mutation({
           lifelogId: args.lifelogId,
           tagId,
           addedBy: identity.email!,
-          addedAt: Date.now(),
         });
       }
     }
@@ -129,7 +113,7 @@ export const rejectLifelog = mutation({
     // Check if the lifelog exists
     const lifelog = await ctx.db
       .query("lifelogs")
-      .filter(q => q.eq(q.field("lifelogId"), args.lifelogId))
+      .withIndex("by_lifelog_id", (q) => q.eq(("lifelogId"), args.lifelogId))
       .first();
       
     if (!lifelog) {
@@ -139,7 +123,7 @@ export const rejectLifelog = mutation({
     // Check if an approval record already exists
     const existingApproval = await ctx.db
       .query("approvals")
-      .filter(q => q.eq(q.field("lifelogId"), args.lifelogId))
+      .withIndex("by_lifelog_id", (q) => q.eq(("lifelogId"), args.lifelogId))
       .first();
     
     if (existingApproval) {
@@ -171,7 +155,7 @@ export const createTag = mutation({
     name: v.string(),
     description: v.optional(v.string()),
     color: v.optional(v.string()),
-    visibilityScope: v.optional(v.string()),
+    visibilityScope: v.string(),
   },
   handler: async (ctx, args) => {
     const identity = await requireAuth(ctx);
@@ -203,7 +187,6 @@ export const createTag = mutation({
       description: args.description,
       color: args.color,
       createdBy: identity.email!,
-      createdAt: Date.now(),
       visibilityScope: args.visibilityScope,
     });
   },
@@ -272,7 +255,7 @@ export const addTagToLifelog = mutation({
     // Check if the lifelog exists
     const lifelog = await ctx.db
       .query("lifelogs")
-      .filter(q => q.eq(q.field("lifelogId"), args.lifelogId))
+      .withIndex("by_lifelog_id", (q) => q.eq(("lifelogId"), args.lifelogId))
       .first();
       
     if (!lifelog) {
@@ -288,11 +271,9 @@ export const addTagToLifelog = mutation({
     // Check if the association already exists
     const existingAssociation = await ctx.db
       .query("lifelogTags")
-      .filter(q => 
-        q.and(
-          q.eq(q.field("lifelogId"), args.lifelogId),
-          q.eq(q.field("tagId"), args.tagId)
-        )
+      .withIndex("by_lifelog_and_tag", (q) => 
+        q.eq("lifelogId", args.lifelogId)
+         .eq("tagId", args.tagId)
       )
       .first();
     
@@ -306,7 +287,6 @@ export const addTagToLifelog = mutation({
       lifelogId: args.lifelogId,
       tagId: args.tagId,
       addedBy: identity.email!,
-      addedAt: Date.now(),
     });
   },
 });
@@ -331,11 +311,9 @@ export const removeTagFromLifelog = mutation({
     // Find the association
     const association = await ctx.db
       .query("lifelogTags")
-      .filter(q => 
-        q.and(
-          q.eq(q.field("lifelogId"), args.lifelogId),
-          q.eq(q.field("tagId"), args.tagId)
-        )
+      .withIndex("by_lifelog_and_tag", (q) => 
+        q.eq("lifelogId", args.lifelogId)
+         .eq("tagId", args.tagId)
       )
       .first();
     
@@ -369,7 +347,7 @@ export const setLifelogVisibility = mutation({
     // Check if the lifelog exists
     const lifelog = await ctx.db
       .query("lifelogs")
-      .filter(q => q.eq(q.field("lifelogId"), args.lifelogId))
+      .withIndex("by_lifelog_id", (q) => q.eq(("lifelogId"), args.lifelogId))
       .first();
       
     if (!lifelog) {
@@ -379,11 +357,11 @@ export const setLifelogVisibility = mutation({
     // Remove any existing visibility scope tags
     const existingScopeTags = await ctx.db
       .query("lifelogTags")
-      .filter(q => q.eq(q.field("lifelogId"), args.lifelogId))
+      .withIndex("by_lifelog_id", (q) => q.eq(("lifelogId"), args.lifelogId))
       .collect();
       
     for (const tagAssoc of existingScopeTags) {
-      const tag = await ctx.db.get(tagAssoc.tagId) as Tag | null;
+      const tag = await ctx.db.get(tagAssoc.tagId);
       
       // Delete existing scope tag associations
       if (tag && tag.name.startsWith("scope:")) {
@@ -397,8 +375,8 @@ export const setLifelogVisibility = mutation({
     // Check if tag already exists
     const existingTag = await ctx.db
       .query("tags")
-      .filter(q => q.eq(q.field("name"), scopeTagName))
-      .first() as Tag | null;
+      .withIndex("by_name", (q) => q.eq(("name"), scopeTagName))
+      .first();
       
     let tagId: Id<"tags">;
     
@@ -411,7 +389,6 @@ export const setLifelogVisibility = mutation({
         description: `Visibility: ${args.visibilityScope}`,
         color: "#5D8AA8", // Default blue for visibility tags
         createdBy: identity.email!,
-        createdAt: Date.now(),
         visibilityScope: args.visibilityScope,
       });
     }
@@ -421,21 +398,6 @@ export const setLifelogVisibility = mutation({
       lifelogId: args.lifelogId,
       tagId,
       addedBy: identity.email!,
-      addedAt: Date.now(),
     });
-  },
-});
-
-// Original example mutation
-export const myMutation = mutation({
-  args: {
-    // ...
-  },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (identity === null) {
-      throw new Error("Unauthenticated call to mutation");
-    }
-    //...
   },
 });

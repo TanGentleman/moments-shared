@@ -2,28 +2,32 @@ import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useEffect, useState } from "react";
 
+const getFrontendTime = (number: number) => {
+  if (!number) return "";
+  const timezone = import.meta.env.VITE_TIMEZONE || 'UTC';
+  return new Date(number).toLocaleString(undefined, { timeZone: timezone });
+}
+
 export function DevContent() {
   const userData = useQuery(api.customAuth.currentUser);
   const tags = useQuery(api.queries.listTags);
   // const pendingApprovals = useQuery(api.queries.getPendingApprovals);
   const [userStats, setUserStats] = useState({
     accountAge: 0,
-    loginCount: 0,
     lastActive: "",
   });
   
   useEffect(() => {
     if (userData) {
+      const currentTime = Date.now();
       // Calculate account age in days
-      const accountAge = Math.floor((Date.now() - userData._creationTime) / (1000 * 60 * 60 * 24));
+      const accountAge = Math.max(0, Math.floor((currentTime - userData._creationTime) / (1000 * 60 * 60 * 24)));
       
       // For demo purposes - these would normally come from your database
-      const loginCount = Math.floor(Math.random() * 50) + 1;
-      const lastActive = new Date().toLocaleString();
+      const lastActive = getFrontendTime(currentTime);
       
       setUserStats({
         accountAge,
-        loginCount,
         lastActive,
       });
     }
@@ -39,11 +43,11 @@ export function DevContent() {
           <h2 className="text-2xl font-semibold mb-4">User Information</h2>
           <div className="bg-gray-700 p-4 rounded overflow-auto mb-4">
             <div className="grid grid-cols-2 gap-2">
-              <p className="text-lg">Email: <span className="font-medium">{userData.email}</span></p>
-              <p className="text-lg">ID: <span className="font-medium">{userData._id}</span></p>
+              <p className="text-lg">Username: <span className="font-medium">{userData.email}</span></p>
+              {/* <p className="text-lg">ID: <span className="font-medium">{userData._id}</span></p> */}
+              <p className="text-lg">Role: <span className="font-medium capitalize">{userData.role}</span></p>
               <p className="text-lg">Account Age: <span className="font-medium">{userStats.accountAge} days</span></p>
-              <p className="text-lg">Created: <span className="font-medium">{new Date(userData._creationTime).toLocaleString()}</span></p>
-              <p className="text-lg">Login Count: <span className="font-medium">{userStats.loginCount}</span></p>
+              <p className="text-lg">Created: <span className="font-medium">{getFrontendTime(userData._creationTime)}</span></p>
               <p className="text-lg">Last Active: <span className="font-medium">{userStats.lastActive}</span></p>
             </div>
           </div>

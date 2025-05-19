@@ -144,10 +144,11 @@ function ApprovalWorkflowContent() {
     if (!selectedLifelogId || !tagName) return;
     const existingTag = allTags?.find(tag => tag.name.toLowerCase() === tagName.toLowerCase());
     let tagId: Id<"tags"> | undefined = existingTag?._id as Id<"tags"> | undefined;
-    if (!tagId) {
+    if (tagId === undefined) {
       tagId = await createTag({
         name: tagName,
-        color: `#${Math.floor(Math.random() * 16777215).toString(16)}`
+        color: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
+        visibilityScope: "admin-only"
       });
     }
     if (tagId) {
@@ -177,7 +178,7 @@ function ApprovalWorkflowContent() {
   return (
     <div className="container mx-auto p-4">
       <style>{markdownStyles}</style>
-      <h1 className="text-2xl font-bold mb-6">Lifelog Approval Workflow</h1>
+      <h1 className="text-2xl font-bold mb-6 text-white">Lifelog Approval Workflow</h1>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Lifelog List Panel */}
         <div className="md:col-span-1 bg-gray-50 p-4 rounded-lg shadow">

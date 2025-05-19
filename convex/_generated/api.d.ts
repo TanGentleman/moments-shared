@@ -13,11 +13,13 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as CustomProfile from "../CustomProfile.js";
 import type * as admin from "../admin.js";
 import type * as approvals_list from "../approvals/list.js";
 import type * as auth from "../auth.js";
 import type * as conversations from "../conversations.js";
 import type * as customAuth from "../customAuth.js";
+import type * as destructive from "../destructive.js";
 import type * as errors from "../errors.js";
 import type * as http from "../http.js";
 import type * as lifelogs_access from "../lifelogs/access.js";
@@ -38,11 +40,13 @@ import type * as types from "../types.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  CustomProfile: typeof CustomProfile;
   admin: typeof admin;
   "approvals/list": typeof approvals_list;
   auth: typeof auth;
   conversations: typeof conversations;
   customAuth: typeof customAuth;
+  destructive: typeof destructive;
   errors: typeof errors;
   http: typeof http;
   "lifelogs/access": typeof lifelogs_access;

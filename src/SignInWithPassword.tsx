@@ -6,6 +6,8 @@ import { useState } from "react";
 import { ConvexError } from "convex/values";
 import { INVALID_PASSWORD } from "../convex/errors";
 
+// TODO: Use Tanstack Form
+// https://tanstack.com/form/latest/docs/framework/react/guides/validation
 export function SignInWithPassword({
   provider,
   handleSent,
@@ -64,6 +66,9 @@ export function SignInWithPassword({
       {/* Under the hood, treated as an email. Displayed as username. */}
       <label htmlFor="email">Username</label>
       <Input name="email" id="email" className="mb-4" autoComplete="email" />
+      
+      {/* Add role as a hidden input */}
+      <input name="role" value="visitor" type="hidden" />
       
       <div className="flex items-center justify-between">
         <label htmlFor="password">Password</label>

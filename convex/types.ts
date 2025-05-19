@@ -143,14 +143,12 @@ export const tagDoc = v.object({
   description: v.optional(v.string()),
   color: v.optional(v.string()),
   createdBy: v.string(),
-  createdAt: v.number(),
 });
 
 export const lifelogTagDoc = v.object({
   lifelogId: v.string(),
   tagId: v.id("tags"),
   addedBy: v.string(),
-  addedAt: v.number(),
 });
 
 export type ApprovalStatus = "pending" | "approved" | "rejected";

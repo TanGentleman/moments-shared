@@ -98,7 +98,7 @@ export const list = query({
       for (const tagId of foundTagIds) {
         const tagsForLifelogs = await ctx.db
           .query("lifelogTags")
-          .withIndex("by_tag", (q) => q.eq("tagId", tagId))
+          .withIndex("by_tag_id", (q) => q.eq("tagId", tagId))
           .collect();
           
         for (const lt of tagsForLifelogs) {

@@ -1,25 +1,35 @@
+import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { UserRole, getUserRole, requireAuth, Permission } from "../admin";
-import { TAG_VISIBILITY, Tag } from "../lifelogs/access";
-
+import { TAG_VISIBILITY } from "../lifelogs/access";
+import { Doc } from "../_generated/dataModel";
 /**
  * List all tags with their visibility scopes
- * No filtering required as we're fetching all tags
+ * Filters tags based on user's role and visibility permissions
  */
 export const list = query({
+  returns: v.array(v.object({
+    _id: v.id("tags"),
+    _creationTime: v.number(),
+    name: v.string(),
+    description: v.optional(v.string()),
+    color: v.optional(v.string()),
+    createdBy: v.string(),
+    visibilityScope: v.string(),
+  })),
   handler: async (ctx) => {
-    // const identity = await requireAuth(ctx);
     const identity = await requireAuth(ctx, Permission.READ);
-    // If user is owner or admin, show all tags
     const userRole = getUserRole(identity);
 
     // Get all tags
-    const tags = await ctx.db.query("tags").collect() as Tag[];
+    const tags = await ctx.db.query("tags").collect();
+    
+    // If user is owner or admin, show all tags
     if (userRole === UserRole.OWNER || userRole === UserRole.ADMIN) {
       return tags;
     }
     
-    // For other users, only show tags they have access to
+    // For other users, only show tags they have access to based on visibility scope
     return tags.filter(tag => {
       // If tag has no visibility scope, use default (admin-only)
       const visibilityScope = tag.visibilityScope || "admin-only";
