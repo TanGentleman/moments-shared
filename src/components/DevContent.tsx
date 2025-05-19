@@ -35,9 +35,7 @@ export function DevContent() {
   
   return (
     <div className="flex flex-col items-center justify-center h-[80vh] text-white">
-      <h1 className="text-4xl font-bold mb-6">
-        Welcome to Dev Mode! (This is only for authenticated users)
-      </h1>
+      <h3 className="text-xl font-medium mb-6" style={{ opacity: 0.9 }}>Welcome to Dev Mode! (This is only for authenticated users)</h3>
       {userData && (
         <div className="bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-2xl">
           <h2 className="text-2xl font-semibold mb-4">User Information</h2>
