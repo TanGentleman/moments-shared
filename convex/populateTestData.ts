@@ -75,33 +75,41 @@ export const populateApprovalData = mutation({
     
     // 2. Create sample lifelogs
     console.log("Creating lifelogs...");
+    const currentTime = Date.now();
+    const ownerScope = "owner" as const;
     const lifelogData = [
       {
         lifelogId: "test-lifelog-1",
         title: "Morning Reflection",
         markdown: `# Morning Reflection\n\nWoke up at 6:30 AM and had a great start to the day. I spent about 30 minutes meditating and then another 15 minutes doing some light stretching.\n\n## Goals for today\n\n- Finish the presentation for the team meeting\n- Call mom\n- Schedule dentist appointment\n\n> "The morning is wiser than the evening." - Russian Proverb`,
         contents: [],
-        startTime: Date.now() - 86400000, // Yesterday
-        endTime: Date.now() - 85800000,
-        embeddingId: null
+        startTime: currentTime - 86400000, // Yesterday
+        endTime: currentTime - 85800000,
+        embeddingId: null,
+        scope: ownerScope,
+        lastUpdated: currentTime
       },
       {
         lifelogId: "test-lifelog-2",
         title: "Work Meeting Notes",
         markdown: `# Team Meeting Notes\n\n## Project Status\n- Frontend: 80% complete\n- Backend: 65% complete\n- QA: Starting next week\n\n## Action Items\n1. Alex: Finalize API documentation\n2. Sarah: Complete user flow diagrams\n3. Me: Prepare demo for stakeholders\n\n**Next meeting:** Tuesday, 10:00 AM`,
         contents: [],
-        startTime: Date.now() - 43200000, // 12 hours ago
-        endTime: Date.now() - 39600000,
-        embeddingId: null
+        startTime: currentTime - 43200000, // 12 hours ago
+        endTime: currentTime - 39600000,
+        embeddingId: null,
+        scope: ownerScope,
+        lastUpdated: currentTime
       },
       {
         lifelogId: "test-lifelog-3",
         title: "Evening Workout",
         markdown: `# Evening Workout\n\n- 5 min warm-up\n- 3 sets of squats (12 reps each)\n- 3 sets of push-ups (15 reps each)\n- 2 sets of planks (60 seconds each)\n- 10 min cool-down\n\nFelt stronger today. Considering increasing weights next week.`,
         contents: [],
-        startTime: Date.now() - 14400000, // 4 hours ago
-        endTime: Date.now() - 10800000,
-        embeddingId: null
+        startTime: currentTime - 14400000, // 4 hours ago
+        endTime: currentTime - 10800000,
+        embeddingId: null,
+        scope: ownerScope,
+        lastUpdated: currentTime
       }
     ];
     

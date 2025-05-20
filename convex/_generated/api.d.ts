@@ -19,6 +19,8 @@ import type * as approvals_list from "../approvals/list.js";
 import type * as auth from "../auth.js";
 import type * as conversations from "../conversations.js";
 import type * as customAuth from "../customAuth.js";
+import type * as dashboard_fetch from "../dashboard/fetch.js";
+import type * as dashboard_helpers from "../dashboard/helpers.js";
 import type * as destructive from "../destructive.js";
 import type * as errors from "../errors.js";
 import type * as http from "../http.js";
@@ -46,6 +48,8 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   conversations: typeof conversations;
   customAuth: typeof customAuth;
+  "dashboard/fetch": typeof dashboard_fetch;
+  "dashboard/helpers": typeof dashboard_helpers;
   destructive: typeof destructive;
   errors: typeof errors;
   http: typeof http;

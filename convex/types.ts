@@ -41,7 +41,7 @@ export type LifelogRequest = {
 };
 
 type ContentNode = {
-  type: "heading1" | "heading2" | "heading3" | "blockquote";
+  type: "heading1" | "heading2" | "heading3" | "blockquote" | "paragraph";
   content: string;
   startTime?: string; // ISO format
   endTime?: string; // ISO format
@@ -75,6 +75,7 @@ export const lifelogDoc = v.object({
         v.literal("heading2"),
         v.literal("heading3"),
         v.literal("blockquote"),
+        v.literal("paragraph"),
       ),
       content: v.string(),
       startTime: v.optional(v.number()),
@@ -211,6 +212,8 @@ export const convertToConvexFormat = (
       startTime: new Date(log.startTime).getTime(),
       endTime: new Date(log.endTime).getTime(),
       embeddingId: null,
+      scope: "owner",
+      lastUpdated: new Date().getTime(),
     };
   });
 };

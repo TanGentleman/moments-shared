@@ -2,6 +2,33 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { authTables } from "@convex-dev/auth/server";
 
+// TODO: Expand conversation schema after lifelog view and search is implemented
+
+const roleType = v.union(
+  v.literal("owner"), v.literal("admin"),
+  v.literal("friend"),v.literal("visitor")
+);
+
+const contentNodeType = v.union(
+  v.literal("heading1"),
+  v.literal("heading2"),
+  v.literal("heading3"),
+  v.literal("blockquote"),
+  v.literal("paragraph"),
+);
+
+const contentNodeSchema = v.object({
+  type: contentNodeType,
+  content: v.string(),
+  startTime: v.optional(v.number()),
+  endTime: v.optional(v.number()),
+  startOffsetMs: v.optional(v.number()),
+  endOffsetMs: v.optional(v.number()),
+  children: v.optional(v.array(v.any())),
+  speakerName: v.optional(v.union(v.string(), v.null())),
+  speakerIdentifier: v.optional(v.union(v.literal("user"), v.null())),
+});
+
 export default defineSchema({
   ...authTables,
   users: defineTable({
@@ -13,8 +40,9 @@ export default defineSchema({
     phoneVerificationTime: v.optional(v.number()),
     isAnonymous: v.optional(v.boolean()),
     // other "users" fields...
-    role: v.optional(v.union(v.literal("owner"), v.literal("admin"), v.literal("friend"), v.literal("visitor"))),
-  }).index("email", ["email"]),
+    role: v.optional(roleType),
+  }),
+  // .index("email", ["email"]),
   conversations: defineTable({
     title: v.string(),
     messages: v.array(
@@ -31,27 +59,12 @@ export default defineSchema({
     lifelogId: v.string(),
     title: v.string(),
     markdown: v.union(v.string(), v.null()),
-    contents: v.array(
-      v.object({
-        type: v.union(
-          v.literal("heading1"),
-          v.literal("heading2"),
-          v.literal("heading3"),
-          v.literal("blockquote"),
-        ),
-        content: v.string(),
-        startTime: v.optional(v.number()),
-        endTime: v.optional(v.number()),
-        startOffsetMs: v.optional(v.number()),
-        endOffsetMs: v.optional(v.number()),
-        children: v.optional(v.array(v.any())),
-        speakerName: v.optional(v.union(v.string(), v.null())),
-        speakerIdentifier: v.optional(v.union(v.literal("user"), v.null())),
-      }),
-    ),
+    contents: v.array(contentNodeSchema),
     startTime: v.number(),
     endTime: v.number(),
     embeddingId: v.union(v.id("markdownEmbeddings"), v.null()),
+    lastUpdated: v.number(),
+    scope: roleType,
   })
     .index("by_start_time", ["startTime"])
     .index("by_lifelog_id", ["lifelogId"])
@@ -72,7 +85,6 @@ export default defineSchema({
 
   operations: defineTable({
     operation: v.union(
-      v.literal("sync"),
       v.literal("create"),
       v.literal("read"),
       v.literal("update"),
@@ -81,6 +93,7 @@ export default defineSchema({
     table: v.union(
       v.literal("lifelogs"),
       v.literal("metadata"),
+      v.literal("users"),
       v.literal("markdownEmbeddings"),
       v.literal("approvals"),
       v.literal("tags"),
