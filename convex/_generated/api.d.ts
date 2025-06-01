@@ -30,6 +30,7 @@ import type * as lifelogs_list from "../lifelogs/list.js";
 import type * as mutations from "../mutations.js";
 import type * as populateTestData from "../populateTestData.js";
 import type * as queries from "../queries.js";
+import type * as sync from "../sync.js";
 import type * as tags_list from "../tags/list.js";
 import type * as types from "../types.js";
 
@@ -59,6 +60,7 @@ declare const fullApi: ApiFromModules<{
   mutations: typeof mutations;
   populateTestData: typeof populateTestData;
   queries: typeof queries;
+  sync: typeof sync;
   "tags/list": typeof tags_list;
   types: typeof types;
 }>;

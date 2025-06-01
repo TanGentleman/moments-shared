@@ -1,4 +1,5 @@
 import { useConvexQuery } from '@convex-dev/react-query'
+import { useAction } from 'convex/react'
 import { useState } from 'react'
 import { api } from '../../convex/_generated/api'
 import { formatDate } from '../utils/dashboard'
@@ -110,15 +111,28 @@ export function LiveContent() {
   const [currentPage, setCurrentPage] = useState(0)
   const [cursor, setCursor] = useState<string | undefined>(undefined)
   const [previousCursors, setPreviousCursors] = useState<string[]>([])
+  const [syncStatus, setSyncStatus] = useState<string | null>(null)
+  
+  const syncWithAPI = useAction(api.sync.syncWithLimitlessAPI)
   
   // Handle syncing action
   const handleSync = async () => {
     setIsSyncing(true)
+    setSyncStatus(null)
+    
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
-      console.log('Synced')
+      const result = await syncWithAPI({});
+      
+      if (result.success) {
+        setSyncStatus(`Sync successful: ${result.data || result.message}`);
+        console.log('Sync successful:', result);
+      } else {
+        setSyncStatus(`Sync failed: ${result.message}`);
+        console.error('Sync failed:', result.message);
+      }
     } catch (error) {
-      console.error('Sync failed:', error)
+      console.error('Sync failed:', error);
+      setSyncStatus(`Sync failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsSyncing(false)
     }
@@ -202,6 +216,17 @@ export function LiveContent() {
             <DateDisplay date={creationDate} />
             <SyncButton onSync={handleSync} isSyncing={isSyncing} />
           </div>
+
+          {/* Sync Status Display */}
+          {syncStatus && (
+            <div className={`px-4 py-2 text-sm ${
+              syncStatus.includes('successful') 
+                ? 'bg-green-500/20 text-green-200 border-green-500/30' 
+                : 'bg-red-500/20 text-red-200 border-red-500/30'
+            } border backdrop-blur-lg`}>
+              {syncStatus}
+            </div>
+          )}
 
           {/* Journal Content */}
           <LifelogContent 
