@@ -4,4 +4,5 @@ export { ChatInput } from './ChatInput';
 export { Sidebar } from './Sidebar';
 export { WelcomeScreen } from './WelcomeScreen';
 export { SettingsDialog } from './SettingsDialog';
-export { Navbar } from './Navbar'; 
+export { Navbar } from './Navbar';
+export { AdminContent } from './AdminContent'; 
